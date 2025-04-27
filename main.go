@@ -5,13 +5,16 @@ import (
 	"log"
 	"os"
 	"io"
+	"strings"
 )
+
+const inputFilePath = "messages.txt"
 
 func main() {
 
-	message, err := os.Open("messages.txt")
+	message, err := os.Open(inputFilePath)
 	if err != nil {
-		log.Print("error reading messages.txt")
+		log.Print("error reading %s\n", inputFilePath, err)
 		panic(err)
 	}
 	// for loop tracking 8 bytes
@@ -22,25 +25,41 @@ func main() {
 
 	
 	
-	// figure out the total length of the messages in bytes
+	var currentLine string
 
 	for {
 		n, err := message.Read(buff)
 		if err == io.EOF {
 			// More to read
-			
+			fmt.Printf("read: %s\n", currentLine)
+
 			break
 		}
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-	if n > 0 {
 		word := string(buff[:n])
-		fmt.Println("read:", word)
-	}
+
+		splitWord := strings.Split(word, "\n")
+		if len(splitWord) > 1 {
+			firstWord := splitWord[0]
+			secondWord := splitWord[1]
+			currentLine += firstWord
+			fmt.Printf("read: %s\n", currentLine)
+			currentLine = ""
+			currentLine +=  secondWord
+			
+		} else {
+			currentLine += word
+			
+		}
+	
 	}
 	
 	return
 }
+
+
+
 
