@@ -3,63 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
-	"io"
-	"strings"
 	"net"
+	"github.com/Tim-Restart/httpfromtcp/internal/request"
 )
 
 const inputFilePath = "messages.txt"
 const network = "tcp"
 const host = ":42069"
 
-func getLinesChannel(conn net.Conn) <-chan string {
-
-	ch := make(chan string)
-	
-	go func() {
-		defer close(ch)
-		buff := make([]byte, 8)
-		var currentLine string
-		
-		for {
-		n, err := conn.Read(buff) // This line needs to be changed to take the incomming connection
-		
-		if err == io.EOF {  // This error needs to be changed to close when the connection closes or similar
-			// More to read
-			if currentLine != "" {
-				ch <- currentLine
-			}
-			break
-		}
-		if err != nil {
-			fmt.Println(err)
-			break
-		}
-
-			// Process the entire chunk of bytes read
-			content := string(buff[:n])
-			for len(content) > 0 {
-				// Find the next newline in the content
-				i := strings.Index(content, "\n")
-				if i >= 0 {
-					// We found a newline
-					currentLine += content[:i] // Add everything up to the newline
-					ch <- currentLine          // Send the complete line
-					currentLine = ""           // Reset for the next line
-					content = content[i+1:]    // Skip past the newline
-				} else {
-					// No more newlines in this chunk
-					currentLine += content
-					break
-				}
-				}
-
-			}
-		}()
-	return ch	
-}
-
-	
 
 
 
@@ -82,10 +33,11 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Println("-----### Connection Established ###-----")
-		packetChannel := getLinesChannel(conn)
-		for line := range packetChannel {
-			fmt.Printf("%s\n", line)
+		newLine, err := RequestFromReader(conn)
+		if err != nil {
+			fmt.Print("Error reading from request")
 		}
+		fmt.Printf("Request line:/n- Method: %v/n- Target: %v/n- Version: %v/n", newLine.RequestLine.Method, newLine.RequestLine.RequestTarget, newLine.RequestLine.HttpVersion)
 	}
 
 
