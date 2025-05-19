@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"github.com/Tim-Restart/httpfromtcp/internal/request"
+	"httpfromtcp/internal/request"
 )
 
 const inputFilePath = "messages.txt"
@@ -32,17 +32,16 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		fmt.Println("-----### Connection Established ###-----")
-		newLine, err := RequestFromReader(conn)
+		newLine, err := request.RequestFromReader(conn)
+		conn.Close()
 		if err != nil {
-			fmt.Print("Error reading from request")
+			log.Print("Error reading from request")
+			continue
 		}
-		fmt.Printf("Request line:/n- Method: %v/n- Target: %v/n- Version: %v/n", newLine.RequestLine.Method, newLine.RequestLine.RequestTarget, newLine.RequestLine.HttpVersion)
+		fmt.Printf("Request line:\n- Method: %v\n- Target: %v\n- Version: %v\n", newLine.RequestLine.Method, newLine.RequestLine.RequestTarget, newLine.RequestLine.HttpVersion)
 	}
-
-
-	
-	
 	return
 }
 
