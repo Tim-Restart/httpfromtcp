@@ -44,6 +44,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		key := strings.TrimSpace(strings.ToLower(keySpace))
 		value := strings.TrimSpace(valueSpace)
 
+		// Checks if the key exists then adds
 		_, exists := h[key]
 		if exists {
 			fmt.Println("Entered the exists condition")
