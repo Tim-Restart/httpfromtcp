@@ -86,7 +86,15 @@ func TestParsingHeaders(t *testing.T) {
 	// Test: Standard Header
 
 	// Test: Empty Headers
-
+	reader = &chunkReader{
+		data:            "GET / HTTP/1.1\r\n\r\n",
+		numBytesPerRead: 3,
+	}
+	r, err = RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Empty(t, r.Headers)
+	
 	// Test: Malformed Header
 
 	// Test: Duplicate Headers

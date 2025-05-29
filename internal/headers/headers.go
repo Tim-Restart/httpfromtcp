@@ -12,13 +12,16 @@ const colon = ":"
 type Headers map[string]string
 
 func NewHeaders() Headers {
-	h := make(Headers)
-	return h
+	return map[string]string{}
 }
 
 
 func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	
+	//if len(data) == 0 {
+	//	return 0, false, fmt.Errorf("Error: Empty Header")
+	//}
+
 	switch bytes.Index(data, []byte(CRLF)) {
     case 0:
         return 2, true, nil
@@ -38,6 +41,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 		keyWhiteSpace := fullHeader[:colonIndex] 
 		valueWhiteSpace := fullHeader[colonIndex +1:]
+		//endLineCheck := fullHeader[:colonIndex +1]
 		
 		keySpace := string(keyWhiteSpace)
 		valueSpace := string(valueWhiteSpace)
@@ -48,15 +52,18 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		}
 
 		// Checks if the key exists then adds
-		_, exists := h[key]
-		if exists {
-			fmt.Println("Entered the exists condition")
-			h[key] += ", " + value
-			return n + 2, false, nil
-		}
+		//_, exists := h[key]
+		//if exists {
+		//	fmt.Println("Entered the exists condition")
+		//	h[key] += ", " + value
+		//	return n + 2, false, nil
+		//}
+	
+		
+		
 
 
-		h[key] = value
+		h.Set(key, string(value))
 		return n + 2, false, nil
 	}
 
@@ -74,6 +81,28 @@ func validTokens(data []byte) bool {
 		}
 	}
 	return true
+}
+
+func (h Headers) Get(content string) (string, bool) {
+	key := strings.ToLower(content)
+	value, ok := h[key]
+	if ok {
+		return value, true
+	} else {
+		return "", false
+	}
+}
+
+func (h Headers) Set(key, value string) {
+	key = strings.ToLower(key)
+	v, ok := h[key]
+	if ok {
+		value = strings.Join([]string{
+			v,
+			value,
+		}, ", ")
+	}
+	h[key] = value
 }
 
 

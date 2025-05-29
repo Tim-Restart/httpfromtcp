@@ -5,17 +5,22 @@ import (
 	"fmt"
 	"unicode"
 	"strings"
+	"strconv"
 	"httpfromtcp/internal/headers"
+	"log"
 )
 
 const StateInitialized = 0
 const StateDone = 1
 const RequestStateParsingHeaders = 2
+const RequestStateParsingBody = 3
 const bufferSize = 8
+const content = "content-length"
 
 type Request struct {
 	RequestLine RequestLine
-	Headers headers.Headers // Using the headers type from the headers package
+	Headers 	headers.Headers // Using the headers type from the headers package
+	Body 		[]byte
 	State		int
 }
 
@@ -37,6 +42,7 @@ func RequestFromReader (reader io.Reader) (*Request, error) {
 	r := &Request{
 		State: StateInitialized,
 		Headers: headers.NewHeaders(),
+		// Might need this, might not??   Body: body
 		}
 
 	// A "for" (really a while) loop to keep going until done
@@ -122,41 +128,67 @@ func parseRequestLine (input string) (RequestLine, int, error) {
 }
 
 func (r *Request) parseSingle(data []byte) (int, error) {
+	remaining := data
 	switch r.State {
 	case StateInitialized:
 		// logic to parse request line
-		reqLine, n, err := parseRequestLine(string(data))
+		reqLine, n, err := parseRequestLine(string(remaining))
+		
 		if err != nil {
-			return n, fmt.Errorf("Error passing Request Line")
-		} else if n > 0 && err == nil {
-			r.RequestLine = reqLine
-			r.State = RequestStateParsingHeaders
-			return n, nil
-		} else {
-		
-		return n, nil
+			return 0, fmt.Errorf("Error passing Request Line")
 		}
-		
+		if n == 0 {
+			// Just need more data
+			return 0, nil
+		}
+		remaining = remaining[n:]
+		r.RequestLine = reqLine
+		r.State = RequestStateParsingHeaders
+		return n, nil
 
 	case RequestStateParsingHeaders:
 		// logic to parse headers
 
-		n, done, err := r.Headers.Parse(data)
+		n, done, err := r.Headers.Parse(remaining)
+		remaining = remaining[n:]
 		if err != nil {
 			fmt.Printf("Error: %v", err)
 			fmt.Printf("Returning header error: %v", string(data))
-			return n, fmt.Errorf("Error parsing headers")
+			return 0, fmt.Errorf("Error parsing headers")
 		}
 		if done == true {
-			r.State = StateDone
-			return n, nil
+			
+			r.State = RequestStateParsingBody
 		}
 		
 		return n, nil
 
+	case RequestStateParsingBody:
+		number, ok := r.Headers.Get(content)
+		if !ok {
+			r.State = StateDone
+			return 0, nil
+		} else {
+			contentLength, err := strconv.Atoi(number)
+			if err != nil {
+				return 0, fmt.Errorf("Unable to convert content length")
+			}
+			n, err := r.parseBody(remaining, contentLength)
+			remaining = remaining[contentLength:]
+			if err != nil {
+				fmt.Printf("Error: %v", err)
+				fmt.Printf("Returning body error: %v", string(data))
+				return n, fmt.Errorf("Error parsing body")
+			} 
+			
+			r.State = StateDone
+			return n, nil
+		}
+
 	default:
 		return 0, fmt.Errorf("unknown state")
 	}
+	return 0, nil
 }
 
 
@@ -164,18 +196,29 @@ func (r *Request) parse(data []byte) (int, error) {
 	totalBytesParsed := 0
 
 	for r.State != StateDone {
-
+		log.Printf("ParseSingle Call Log Print: %v",string(data[totalBytesParsed:]))
 		n, err := r.parseSingle(data[totalBytesParsed:])
 		if err != nil {
-			return totalBytesParsed, err
+			return 0, err
 		}
+		totalBytesParsed += n
 		if n == 0 {
 			// Need more data to make progress in the current state
 			break
 		}
-		totalBytesParsed += n
+		
 	}
 	return totalBytesParsed, nil
+}
+
+func (r *Request) parseBody(data []byte, length int) (int, error) {
+	if len(data) < length {
+		return 0, fmt.Errorf("Data length less than content length")
+	} 
+
+	body := data[:length]
+	r.Body = body
+	return len(body), nil
 }
 
 

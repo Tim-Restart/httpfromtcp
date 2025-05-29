@@ -45,6 +45,8 @@ func main() {
 		for key, value := range newLine.Headers {
 			fmt.Printf("- %v: %v\n", key, value)
 		}
+		fmt.Println("Body:")
+		fmt.Printf("%v\n", string(newLine.Body))
 		
 	}
 	return
