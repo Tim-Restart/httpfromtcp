@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"httpfromtcp/internal"
+	"httpfromtcp/internal/server"
 	"os/signal"
 	"syscall"
 	"os"

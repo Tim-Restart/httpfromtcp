@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync/atomic"
+	"httpfromtcp/internal/response"
 )
 
 
@@ -80,21 +81,21 @@ func (s *Server) listen() {
 
 
 func (s *Server) handle(conn net.Conn) {
-	// Handles a single connection by writing the following response then closing the connection
-	/*
-		HTTP/1.1 200 OK
-		Content-Type: text/plain
 
-		Hello World!
-	*/
 	defer conn.Close()
-	staticResponse := "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!"
-	byteResposne := []byte(staticResponse)
-	_, err := conn.Write(byteResposne)
+
+	err := response.WriteStatusLine(conn, response.Ok)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error writing status code")
 		return
 	}
+	defaultHeaders := response.GetDefaultHeaders(0)
+	err = response.WriteHeaders(conn, defaultHeaders)
+	if err != nil {
+		log.Println("Error writting headers")
+		return
+	}
+
 }
 
 
