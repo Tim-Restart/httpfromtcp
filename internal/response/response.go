@@ -13,18 +13,19 @@ const (
 	Ok StatusCode = 200
 	BadRequest StatusCode = 400
 	InternalError StatusCode = 500
+	crlf = "\r\n"
 )
 
 func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
 	switch statusCode{
 	case Ok:
-		w.Write([]byte("HTTP/1.1 200 OK"))
+		w.Write([]byte("HTTP/1.1 200 OK" + crlf))
 		return nil
 	case BadRequest:
-		w.Write([]byte("HTTP/1.1 400 Bad Request"))
+		w.Write([]byte("HTTP/1.1 400 Bad Request" + crlf))
 		return nil
 	case InternalError:
-		w.Write([]byte("HTTP/1.1 500 Internal Server Error"))
+		w.Write([]byte("HTTP/1.1 500 Internal Server Error" + crlf))
 		return nil
 	default:
 		return nil
