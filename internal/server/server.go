@@ -17,6 +17,13 @@ type Server struct{
 	listener		net.Listener
 }
 
+
+type HandlerError struct{
+	// something here about errors
+	handlerStatusCode 	int
+	handlerError 		string
+}
+
 func Serve(port int) (*Server, error) {
 	serverPort := ":"
 	
@@ -71,14 +78,6 @@ func (s *Server) listen() {
 		// Send it off to the handler here?
 		}
 	}
-
-
-	
-	
-
-		
-
-
 
 func (s *Server) handle(conn net.Conn) {
 
