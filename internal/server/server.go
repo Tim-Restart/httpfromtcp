@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync/atomic"
 	"httpfromtcp/internal/response"
+	"io"
 )
 
 
@@ -24,7 +25,11 @@ type HandlerError struct{
 	handlerError 		string
 }
 
-func Serve(port int) (*Server, error) {
+
+
+type Handler func(w io.Writer, req *request.Request) *HandlerError
+
+func Serve(port int, handler Handler) (*Server, error) {
 	serverPort := ":"
 	
 	//Called in the main package to start the server
@@ -94,6 +99,20 @@ func (s *Server) handle(conn net.Conn) {
 		log.Println("Error writting headers")
 		return
 	}
+
+}
+
+func WriteHandlerError(w io.Writer, he *HandlerError) error {
+
+	err := response.WriteStatusLine(w, he)
+	if err != nil {
+		log.Println("Error writing handler error")
+		return err
+	}
+
+	err = response.WriteHeaders(w, )
+
+	
 
 }
 
