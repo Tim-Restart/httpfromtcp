@@ -7,7 +7,9 @@ import (
 	"strconv"
 	"sync/atomic"
 	"httpfromtcp/internal/response"
+	"httpfromtcp/internal/request"
 	"io"
+	"bytes"
 )
 
 type Handler func(w io.Writer, req *request.Request) *HandlerError
@@ -16,16 +18,19 @@ type Server struct{
 	// Struct stuff here
 	ServerState		atomic.Bool
 	listener		net.Listener
-	handle 			Handler
+	hand 			Handler
 }
 
 
 type HandlerError struct{
-	handlerStatusCode 	int
-	handlerMessage 		string
+	HandlerStatusCode 	int
+	HandlerMessage 		string
 }
 
-
+func (he HandlerError) Error() string {
+	message := fmt.Sprintf("Status Code: %v Error: %v", he.HandlerStatusCode, he.HandlerMessage)
+	return message
+}
 
 
 
@@ -34,7 +39,7 @@ func Serve(port int, handler Handler) (*Server, error) {
 	
 	//Called in the main package to start the server
 	s := &Server{}
-	s.handle = handler
+	s.hand = handler
 	serverPort += strconv.Itoa(port)
 	
 	s.ServerState.Store(true)
@@ -89,16 +94,16 @@ func (s *Server) handle(conn net.Conn) {
 
 	defer conn.Close()
 
-	parsedRequest, err := RequestFromReader(conn)
+	parsedRequest, err := request.RequestFromReader(conn)
 	if err != nil {
-		_ := WriteHandlerError(conn, err)
+		_ = WriteHandlerError(conn, &HandlerError{})
 		return
 	}
 	var buf bytes.Buffer
 
-	err = s.handler(buf, parsedRequest)
+	err = s.hand(&buf, parsedRequest)
 	if err != nil {
-		_ := WriteHandlerError(conn, err)
+		_ = WriteHandlerError(conn, &HandlerError{})
 		return
 	}
 
@@ -116,7 +121,7 @@ func (s *Server) handle(conn net.Conn) {
 
 	_, err = buf.WriteTo(conn)
 	if err != nil {
-		_ := WriteHandlerError(conn, err)
+		_ = WriteHandlerError(conn, &HandlerError{})
 		return
 	}
 
@@ -125,18 +130,18 @@ func (s *Server) handle(conn net.Conn) {
 func WriteHandlerError(w io.Writer, he *HandlerError) error {
 
 
-	err := response.WriteStatusLine(w, he.handlerStatusCode)
+	err := response.WriteStatusLine(w, response.StatusCode(he.HandlerStatusCode))
 	if err != nil {
 		log.Println("Error writing handler status code")
 		return err
 	}
 
-	_, err := w.Write([]byte(he.handlerMessage))
+	_, err = w.Write([]byte(he.HandlerMessage))
 	if err != nil {
 		log.Println("Error writing handler message")
 		return err
 	}
-
+	return nil
 }
 
 

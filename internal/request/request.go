@@ -141,7 +141,7 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 			// Just need more data
 			return 0, nil
 		}
-		//remaining = remaining[n:]
+		remaining = remaining[n:]
 		r.RequestLine = reqLine
 		r.State = RequestStateParsingHeaders
 		return n, nil
