@@ -10,30 +10,31 @@ import (
 	"io"
 )
 
-
+type Handler func(w io.Writer, req *request.Request) *HandlerError
 
 type Server struct{
 	// Struct stuff here
 	ServerState		atomic.Bool
 	listener		net.Listener
+	handle 			Handler
 }
 
 
 type HandlerError struct{
-	// something here about errors
 	handlerStatusCode 	int
-	handlerError 		string
+	handlerMessage 		string
 }
 
 
 
-type Handler func(w io.Writer, req *request.Request) *HandlerError
+
 
 func Serve(port int, handler Handler) (*Server, error) {
 	serverPort := ":"
 	
 	//Called in the main package to start the server
 	s := &Server{}
+	s.handle = handler
 	serverPort += strconv.Itoa(port)
 	
 	s.ServerState.Store(true)
@@ -88,7 +89,20 @@ func (s *Server) handle(conn net.Conn) {
 
 	defer conn.Close()
 
-	err := response.WriteStatusLine(conn, response.Ok)
+	parsedRequest, err := RequestFromReader(conn)
+	if err != nil {
+		_ := WriteHandlerError(conn, err)
+		return
+	}
+	var buf bytes.Buffer
+
+	err = s.handler(buf, parsedRequest)
+	if err != nil {
+		_ := WriteHandlerError(conn, err)
+		return
+	}
+
+	err = response.WriteStatusLine(conn, response.Ok)
 	if err != nil {
 		log.Println("Error writing status code")
 		return
@@ -100,19 +114,28 @@ func (s *Server) handle(conn net.Conn) {
 		return
 	}
 
+	_, err = buf.WriteTo(conn)
+	if err != nil {
+		_ := WriteHandlerError(conn, err)
+		return
+	}
+
 }
 
 func WriteHandlerError(w io.Writer, he *HandlerError) error {
 
-	err := response.WriteStatusLine(w, he)
+
+	err := response.WriteStatusLine(w, he.handlerStatusCode)
 	if err != nil {
-		log.Println("Error writing handler error")
+		log.Println("Error writing handler status code")
 		return err
 	}
 
-	err = response.WriteHeaders(w, )
-
-	
+	_, err := w.Write([]byte(he.handlerMessage))
+	if err != nil {
+		log.Println("Error writing handler message")
+		return err
+	}
 
 }
 

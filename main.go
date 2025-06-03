@@ -59,7 +59,20 @@ func getLinesChannel(conn net.Conn) <-chan string {
 	return ch	
 }
 
+// Handler functions go here
+
+func firstHandler(w io.Writer, req *request.Request) *server.HandlerError {
+	switch req.RequestLine.RequestTarget {
+	case "/yourproblem":
+		return &server.HandlerError{handlerStatusCode: 400, handlerMessage: "Your problem is not my problem\n"}
+	case "/myproblem":
+		return &server.HandlerError{handlerStatusCode: 500, handlerMessage: "Woopsie, my bad\n"}
+	default:
+		w.Write([]byte("All good, frfr\n"))
+		return nil
+	}
 	
+}
 
 
 
