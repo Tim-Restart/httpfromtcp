@@ -56,7 +56,7 @@ func RequestFromReader (reader io.Reader) (*Request, error) {
 		}
 
 		n, err := reader.Read(buf[readToIndex:])
-		log.Println("entered the part before the EOF part!!!!")
+		// log.Println("entered the part before the EOF part!!!!")
 		if err != nil {
 			log.Println("entered pre EOF")
 			if err == io.EOF {

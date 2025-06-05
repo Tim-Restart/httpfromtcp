@@ -113,14 +113,13 @@ func validTokens(data []byte) bool {
 }
 
 func (h Headers) Get(content string) (string, bool) {
-	log.Print("** You are in the Get Headers place **")
+	//log.Print("** You are in the Get Headers place **")
 	key := strings.ToLower(content)
 	value, ok := h[key]
 	if ok {
 		log.Printf("value: %v", value)
 		return value, true
 	} else {
-		log.Printf("No value in Get")
 		return "", false
 	}
 }

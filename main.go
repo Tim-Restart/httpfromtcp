@@ -34,14 +34,14 @@ func firstHandler(w io.Writer, req *request.Request) *server.HandlerError {
 
 func main() {
 
-	fmt.Println("-----### Connection Establishing ###-----")
+	fmt.Println("-----### Connection Establishing")
 
 	server, err := server.Serve(host, firstHandler)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	fmt.Println("-----### Connection Established ###-----")
+	fmt.Println("-----### Connection Established")
 
 	defer server.Close()
 

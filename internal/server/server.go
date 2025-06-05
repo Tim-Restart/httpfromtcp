@@ -51,7 +51,7 @@ func Serve(port int, handler Handler) (*Server, error) {
 
 	go s.listen()
 	
-	fmt.Println("--##--Server Established--##--")
+	fmt.Println("-----### Server Established")
 
 	return s, nil
 }
@@ -119,19 +119,20 @@ func (s *Server) handle(conn net.Conn) {
 		return
 	}
 
-
+	log.Println("***********Entered the success stream!!!!")
 	err = response.WriteStatusLine(conn, response.Ok)
 	if err != nil {
 		log.Println("Error writing status code")
 		return
 	}
-	defaultHeaders := response.GetDefaultHeaders(0)
+	length := buf.Len()
+	defaultHeaders := response.GetDefaultHeaders(length)
 	err = response.WriteHeaders(conn, defaultHeaders)
 	if err != nil {
 		log.Println("Error writting headers")
 		return
 	}
-
+	log.Printf("Buf print: %v", buf)
 	_, err = buf.WriteTo(conn)
 	if err != nil {
 		_ = WriteHandlerError(conn, err.(*HandlerError))
@@ -141,15 +142,28 @@ func (s *Server) handle(conn net.Conn) {
 }
 
 func WriteHandlerError(w io.Writer, he *HandlerError) error {
+	header := "Content-Type: text/plain\r\nContent-Length: "
+	length := len(he.HandlerMessage)
+	CRLF := "\r\n"
+	headerFormated := []byte(header + strconv.Itoa(length) + CRLF + CRLF)
 
-
+	// Creates the Status Line and sends it to the Writer
 	err := response.WriteStatusLine(w, response.StatusCode(he.HandlerStatusCode))
+	//log.Printf("##--WriteHandlerError Response: %v", response.StatusCode(he.HandlerStatusCode))
 	if err != nil {
 		log.Println("Error writing handler status code")
 		return err
 	}
 
+	// Create the headers and send to the writer
+	_, err = w.Write(headerFormated)
+	if err != nil {
+		log.Println("Error writing headers")
+		return err
+	}
+
 	_, err = w.Write([]byte(he.HandlerMessage))
+	//log.Printf("##--WriteHanderError Write: %v", he.HandlerMessage)
 	if err != nil {
 		log.Println("Error writing handler message")
 		return err
