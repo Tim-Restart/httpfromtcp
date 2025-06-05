@@ -103,9 +103,22 @@ func (s *Server) handle(conn net.Conn) {
 
 	err = s.hand(&buf, parsedRequest)
 	if err != nil {
-		_ = WriteHandlerError(conn, &HandlerError{})
+		value, ok := err.(*HandlerError)
+		if ok {
+			if value != nil {
+				_ = WriteHandlerError(conn, value)
+			}
+		} else {
+			unexpectedErr := &HandlerError{
+				HandlerStatusCode: 500,
+				HandlerMessage: "Server Error",
+			}
+		_ = WriteHandlerError(conn, unexpectedErr)
+		log.Printf("Handler returned unexpected error type: %v", err)
+		}
 		return
 	}
+
 
 	err = response.WriteStatusLine(conn, response.Ok)
 	if err != nil {
@@ -121,7 +134,7 @@ func (s *Server) handle(conn net.Conn) {
 
 	_, err = buf.WriteTo(conn)
 	if err != nil {
-		_ = WriteHandlerError(conn, &HandlerError{})
+		_ = WriteHandlerError(conn, err.(*HandlerError))
 		return
 	}
 

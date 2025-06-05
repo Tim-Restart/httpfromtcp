@@ -7,6 +7,7 @@ import (
 	"strings"
 	"strconv"
 	"httpfromtcp/internal/headers"
+	"log"
 )
 
 const StateInitialized = 0
@@ -55,10 +56,16 @@ func RequestFromReader (reader io.Reader) (*Request, error) {
 		}
 
 		n, err := reader.Read(buf[readToIndex:])
+		log.Println("entered the part before the EOF part!!!!")
 		if err != nil {
+			log.Println("entered pre EOF")
 			if err == io.EOF {
+				log.Println("Entered the EOF")
+				if r.State != StateDone {
+					return nil, err
+				}
 				// We've reached the end of the input
-				r.State = StateDone
+				// r.State = StateDone
 				break
 			}
 			return nil, err
@@ -122,7 +129,8 @@ func parseRequestLine (input string) (RequestLine, int, error) {
 		if !unicode.IsUpper(r) || !unicode.IsLetter(r) {
 			return RequestLine{}, 0, fmt.Errorf("Incorrect case or rune for method")
 		}
-	}	
+	}
+	log.Printf("This is the request: %v", request)	
 	return request, full + 2, nil
 
 }
@@ -141,9 +149,10 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 			// Just need more data
 			return 0, nil
 		}
-		remaining = remaining[n:]
+		//remaining = remaining[n:]
 		r.RequestLine = reqLine
 		r.State = RequestStateParsingHeaders
+		log.Printf("This is the Request Line: %v", reqLine)
 		return n, nil
 
 	case RequestStateParsingHeaders:
@@ -157,13 +166,14 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 			return 0, fmt.Errorf("Error parsing headers")
 		}
 		if done == true {
-			
+			log.Printf("^^^^ This is the headers: %v", r.Headers)
 			r.State = RequestStateParsingBody
 		}
 		remaining = remaining[n:]
 		return n, nil
 
 	case RequestStateParsingBody:
+		log.Println("----- You have entered the body parsing zone -----")
 		number, ok := r.Headers.Get(content)
 		if !ok {
 			r.State = StateDone
@@ -175,18 +185,21 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 		}
 		r.Body = append(r.Body, data...)
 		r.bodyLengthRead += len(data)
+		log.Printf("This is the body: %v", r.Body)
 		if r.bodyLengthRead > contentLength {
 			return 0, fmt.Errorf("Content-Length too large")
 		}
 		if r.bodyLengthRead == contentLength {
 			r.State = StateDone
 		}
+		
 		return len(data), nil
 		
 
 	default:
 		return 0, fmt.Errorf("unknown state")
 	}
+	
 	return 0, nil
 }
 

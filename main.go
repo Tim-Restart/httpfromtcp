@@ -16,6 +16,8 @@ const host = 42069
 // Handler functions go here
 
 func firstHandler(w io.Writer, req *request.Request) *server.HandlerError {
+	log.Println("###$$$ You have entered the handler$$$###")
+	log.Printf("Req: %v", req.RequestLine.RequestTarget)
 	switch req.RequestLine.RequestTarget {
 	case "/yourproblem":
 		return &server.HandlerError{HandlerStatusCode: 400, HandlerMessage: "Your problem is not my problem\n"}
