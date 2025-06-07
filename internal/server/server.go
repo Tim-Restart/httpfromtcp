@@ -95,20 +95,27 @@ func (s *Server) handle(conn net.Conn) {
 	defer conn.Close()
 
 	parsedRequest, err := request.RequestFromReader(conn)
+	log.Println("***********Request has been parsed in the handler")
 	if err != nil {
 		_ = WriteHandlerError(conn, &HandlerError{})
 		return
 	}
+	log.Println("***********Initialising the buffer")
 	var buf bytes.Buffer
 
 	err = s.hand(&buf, parsedRequest)
+	log.Println("***********Run s.hand($buf)")
 	if err != nil {
+		log.Println("***********Entered if statement 1")
 		value, ok := err.(*HandlerError)
 		if ok {
+			log.Println("***********Entered if statement 2")
 			if value != nil {
+				log.Println("***********Entered if statement 3 (Value !=nil)")
 				_ = WriteHandlerError(conn, value)
 			}
 		} else {
+			log.Println("***********Entered else statement")
 			unexpectedErr := &HandlerError{
 				HandlerStatusCode: 500,
 				HandlerMessage: "Server Error",
@@ -171,5 +178,31 @@ func WriteHandlerError(w io.Writer, he *HandlerError) error {
 	return nil
 }
 
+/*
+
+func WriteSuccessM(w io.Writer, message string) error {
+
+	length := len(message)
+
+	err = response.WriteStatusLine(w, response.Ok)
+	if err != nil {
+		log.Println("Error writing status code")
+		return err
+	}
+	length := buf.Len()
+	defaultHeaders := response.GetDefaultHeaders(length)
+	err = response.WriteHeaders(w, defaultHeaders)
+	if err != nil {
+		log.Println("Error writting headers")
+		return err
+	}
+	log.Printf("Buf print: %v", buf)
+	_, err = buf.WriteTo(conn)
+	if err != nil {
+		_ = WriteHandlerError(conn, err.(*HandlerError))
+		return err
+	}
+	return nil
+}
 
 

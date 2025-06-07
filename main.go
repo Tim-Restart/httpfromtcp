@@ -24,8 +24,8 @@ func firstHandler(w io.Writer, req *request.Request) *server.HandlerError {
 	case "/myproblem":
 		return &server.HandlerError{HandlerStatusCode: 500, HandlerMessage: "Woopsie, my bad\n"}
 	default:
-		w.Write([]byte("All good, frfr\n"))
-		return nil
+		//w.Write([]byte("All good, frfr\n"))
+		return &server.HandlerError{HandlerStatusCode: 200, HandlerMessage: "All good, frfr\n"}
 	}
 	
 }
