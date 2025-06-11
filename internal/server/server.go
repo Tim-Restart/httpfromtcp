@@ -131,7 +131,6 @@ func (s *Server) handle(conn net.Conn) {
 		log.Println("Error writting headers")
 		return
 	}
-	log.Printf("Buf print: %v", buf)
 	_, err = buf.WriteTo(conn)
 	if err != nil {
 		_ = WriteHandlerError(conn, err.(*HandlerError))

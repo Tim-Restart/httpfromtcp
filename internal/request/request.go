@@ -152,7 +152,6 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 		//remaining = remaining[n:]
 		r.RequestLine = reqLine
 		r.State = RequestStateParsingHeaders
-		log.Printf("This is the Request Line: %v", reqLine)
 		return n, nil
 
 	case RequestStateParsingHeaders:
@@ -166,14 +165,12 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 			return 0, fmt.Errorf("Error parsing headers")
 		}
 		if done == true {
-			log.Printf("^^^^ This is the headers: %v", r.Headers)
 			r.State = RequestStateParsingBody
 		}
 		remaining = remaining[n:]
 		return n, nil
 
 	case RequestStateParsingBody:
-		log.Println("----- You have entered the body parsing zone -----")
 		number, ok := r.Headers.Get(content)
 		if !ok {
 			r.State = StateDone
@@ -185,7 +182,6 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 		}
 		r.Body = append(r.Body, data...)
 		r.bodyLengthRead += len(data)
-		log.Printf("This is the body: %v", r.Body)
 		if r.bodyLengthRead > contentLength {
 			return 0, fmt.Errorf("Content-Length too large")
 		}
