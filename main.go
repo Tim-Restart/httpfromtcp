@@ -15,16 +15,18 @@ const host = 42069
 
 // Handler functions go here
 
-func firstHandler(w io.Writer, req *request.Request) *server.HandlerError {
-	log.Println("###$$$ You have entered the handler$$$###")
-	log.Printf("Req: %v", req.RequestLine.RequestTarget)
+func firstHandler(w *response.Writer, req *request.Request) *server.HandlerError {
+
 	switch req.RequestLine.RequestTarget {
 	case "/yourproblem":
+		preparedResponse := //somefunction call here to the response.Writer package
 		return &server.HandlerError{HandlerStatusCode: 400, HandlerMessage: "Your problem is not my problem\n"}
 	case "/myproblem":
+		preparedResponse := //somefunction call here to the response.Writer package
 		return &server.HandlerError{HandlerStatusCode: 500, HandlerMessage: "Woopsie, my bad\n"}
 	default:
-		//w.Write([]byte("All good, frfr\n"))
+		
+		preparedResponse := //somefunction call here to the response.Writer package
 		return &server.HandlerError{HandlerStatusCode: 200, HandlerMessage: "All good, frfr\n"}
 	}
 	
