@@ -9,8 +9,7 @@ import (
 	"httpfromtcp/internal/response"
 	"httpfromtcp/internal/request"
 )
-// Old handler function declaration
-// type Handler func(w io.Writer, req *request.Request) *HandlerError
+
 
 type Handler func(w *response.Writer, req *request.Request)
 
@@ -21,18 +20,7 @@ type Server struct{
 	hand 			Handler
 }
 
-// No longer required due to refactor
-/*
-type HandlerError struct{
-	HandlerStatusCode 	int
-	HandlerMessage 		string
-}
 
-func (he HandlerError) Error() string {
-	message := fmt.Sprintf("Status Code: %v Error: %v", he.HandlerStatusCode, he.HandlerMessage)
-	return message
-}
-*/
 
 
 func Serve(port int, handler Handler) (*Server, error) {
@@ -105,77 +93,4 @@ func (s *Server) handle(conn net.Conn) {
 	s.hand(writer, parsedRequest) 
 }
 
-	/* All below is not needed after refactor
-	var buf bytes.Buffer
-
-	err = s.hand(&buf, parsedRequest)
-	if err != nil {
-		value, ok := err.(*HandlerError)
-		if ok {
-			if value != nil {
-				_ = WriteHandlerError(conn, value)
-			}
-		} else {
-			unexpectedErr := &HandlerError{
-				HandlerStatusCode: 500,
-				HandlerMessage: "Server Error",
-			}
-		_ = WriteHandlerError(conn, unexpectedErr)
-		log.Printf("Handler returned unexpected error type: %v", err)
-		}
-		return
-	}
-
-	err = response.WriteStatusLine(conn, response.Ok)
-	if err != nil {
-		log.Println("Error writing status code")
-		return
-	}
-	length := buf.Len()
-	defaultHeaders := response.GetDefaultHeaders(length)
-	err = response.WriteHeaders(conn, defaultHeaders)
-	if err != nil {
-		log.Println("Error writting headers")
-		return
-	}
-	_, err = buf.WriteTo(conn)
-	if err != nil {
-		_ = WriteHandlerError(conn, err.(*HandlerError))
-		return
-	}
-
-}
 	
-
-func WriteHandlerError(w io.Writer, he *HandlerError) error {
-	header := "Content-Type: text/plain\r\nContent-Length: "
-	length := len(he.HandlerMessage)
-	CRLF := "\r\n"
-	headerFormated := []byte(header + strconv.Itoa(length) + CRLF + CRLF)
-
-	// Creates the Status Line and sends it to the Writer
-	err := response.WriteStatusLine(w, response.StatusCode(he.HandlerStatusCode))
-	//log.Printf("##--WriteHandlerError Response: %v", response.StatusCode(he.HandlerStatusCode))
-	if err != nil {
-		log.Println("Error writing handler status code")
-		return err
-	}
-
-	// Create the headers and send to the writer
-	_, err = w.Write(headerFormated)
-	if err != nil {
-		log.Println("Error writing headers")
-		return err
-	}
-
-	_, err = w.Write([]byte(he.HandlerMessage))
-	//log.Printf("##--WriteHanderError Write: %v", he.HandlerMessage)
-	if err != nil {
-		log.Println("Error writing handler message")
-		return err
-	}
-	return nil
-}
-
-End of commented out old code
-	*/

@@ -27,6 +27,8 @@ const (
 	Finished = 3
 )
 
+
+
 func NewWriter( w io.Writer) *Writer{
 	newWriter := &Writer{
 		writer: w,
@@ -34,6 +36,7 @@ func NewWriter( w io.Writer) *Writer{
 	}
 	return newWriter
 }
+
 
 func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	// Initializes the Writer status for the Status line
@@ -143,4 +146,38 @@ func HtmlResponse(responseCode StatusCode) string{
 		return okResponse
 	}
 }
+
+func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
+	// continually parses the chuncked body
+	// Chunk sizes should be the sizes in bytes of the data, 
+	// and should be in hexadecimal format
+	length := len(p)
+	hexLength := strconv.FormatInt(int64(length), 16)
+	_, err := w.writer.Write([]byte(hexLength + crlf))
+	if err != nil {
+		return 0, fmt.Error("Error writing the length of chuncked body")
+	}
+	_, err = w.writer.Write(p)
+	if err != nil {
+		return 0, fmt.Error("Error writing the body of chuncked body")
+	}
+	_, err = w.writer.Write([]byte(crlf))
+	if err != nil {
+		return 0, fmt.Errorf("Error writing the end of chuncked package")
+	}
+	return length, nil
+
+}
+
+func (w *Writer) WriteChunkedBodyDone() (int, error) {
+	// does what is required once the chuncked body is done
+	endChunk := []byte("0\r\n\r\n")
+	length, err := w.writer.Write(endChunk)
+	if err != nil {
+		return 0, fmt.Errorf("Error writing the end of chuncked package")
+	}
+	return length, nil
+
+}
+
 
