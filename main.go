@@ -6,28 +6,76 @@ import (
 	"io"
 	"httpfromtcp/internal/request"
 	"httpfromtcp/internal/server"
+	"httpfromtcp/internal/response"
 )
 
 const inputFilePath = "messages.txt"
 const network = "tcp"
 const host = 42069
 
+func NewWriter( w io.Writer) *Writer{
+	newWriter := &Writer{
+		writer: w,
+		WriteStatus: 0,
+	}
+	return newWriter
+}
+
 
 // Handler functions go here
 
-func firstHandler(w *response.Writer, req *request.Request) *server.HandlerError {
+func firstHandler(w *response.Writer, req *request.Request) {
 
 	switch req.RequestLine.RequestTarget {
 	case "/yourproblem":
-		preparedResponse := //somefunction call here to the response.Writer package
-		return &server.HandlerError{HandlerStatusCode: 400, HandlerMessage: "Your problem is not my problem\n"}
+		err := w.WriteStatusLine(response.BadRequest) // Not sure if this is right
+		if err != nil {
+			fmt.Println("Failed to write status line")
+			return
+		}
+		err = w.WriteHeaders(headers)
+		if err != nil {
+			fmt.Println("Failed to write headers")
+			return
+		}
+		err = w.WriteBody([]byte(htmlContent))
+		if err != nil {
+			fmt.Println("Failed to write body")
+			return
+		}
+	
 	case "/myproblem":
-		preparedResponse := //somefunction call here to the response.Writer package
-		return &server.HandlerError{HandlerStatusCode: 500, HandlerMessage: "Woopsie, my bad\n"}
+		err := w.WriteStatusLine(response.InternalError) // Not sure if this is right
+		if err != nil {
+			fmt.Println("Failed to write status line")
+			return
+		}
+		err = w.WriteHeaders(headers)
+		if err != nil {
+			fmt.Println("Failed to write headers")
+			return
+		}
+		err = w.WriteBody([]byte(htmlContent))
+		if err != nil {
+			fmt.Println("Failed to write body")
+			return
+		}
 	default:
-		
-		preparedResponse := //somefunction call here to the response.Writer package
-		return &server.HandlerError{HandlerStatusCode: 200, HandlerMessage: "All good, frfr\n"}
+			err := w.WriteStatusLine(response.Ok) // Not sure if this is right
+		if err != nil {
+			fmt.Println("Failed to write status line")
+			return
+		}
+		err = w.WriteHeaders(headers)
+		if err != nil {
+			fmt.Println("Failed to write headers")
+			return
+		}
+		err = w.WriteBody([]byte(htmlContent))
+		if err != nil {
+			fmt.Println("Failed to write body")
+			return
+		}
 	}
 	
 }

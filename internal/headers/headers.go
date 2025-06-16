@@ -52,51 +52,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	}
 	return totalConsumed, true, nil
 }
-// Commented out this logic as it didn't seem to be working
-	/*
-	switch bytes.Index(data, []byte(CRLF)) {
-    case 0:
-        return 2, true, nil
-	case -1:
-        return 0, false, nil
-    default:
-		n := bytes.Index(data, []byte(CRLF))
-		fullHeader := data[:n]
-		colonIndex := bytes.Index(fullHeader, []byte(colon))
-		if colonIndex > 0 && fullHeader[colonIndex -1] == ' ' {
-			return 0, false, fmt.Errorf("Invalid header: space before colon")
-		}
-		if colonIndex == -1 { // Colon not found invalid header
-			fmt.Println("Returning header error")
-			return 0, false, fmt.Errorf("Invalid header: No colon found")
-		}
 
-		keyWhiteSpace := fullHeader[:colonIndex] 
-		valueWhiteSpace := fullHeader[colonIndex +1:]
-		//endLineCheck := fullHeader[:colonIndex +1]
-		
-		keySpace := string(keyWhiteSpace)
-		valueSpace := string(valueWhiteSpace)
-		key := strings.TrimSpace(strings.ToLower(keySpace))
-		value := strings.TrimSpace(valueSpace)
-		if !validTokens([]byte(key)) {
-			return 0, false, fmt.Errorf("invalid header token found: %s", key)
-		}
-
-		// Checks if the key exists then adds
-		//_, exists := h[key]
-		//if exists {
-		//	fmt.Println("Entered the exists condition")
-		//	h[key] += ", " + value
-		//	return n + 2, false, nil
-		//}
-	
-		h.Set(key, string(value))
-		return n + 2, false, nil
-	}
-
-}
-*/
 
 var tokenChars = []byte{'!', '#', '$', '%', '&', '\'', '*', '+', '.', '^', '_', '`', '|', '~'}
 

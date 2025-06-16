@@ -9,11 +9,11 @@ import (
 
 type StatusCode int
 
+
+
 type Writer struct {
-	// I want to put status code in here??
-	StatusLine 	[]byte
-	Headers		[]byte
-	Body 		[]byte
+	writer			io.Writer
+	WriteStatus		int
 }
 
 const (
@@ -21,20 +21,48 @@ const (
 	BadRequest StatusCode = 400
 	InternalError StatusCode = 500
 	crlf = "\r\n"
+	StatusLine = 0
+	WriteHeader = 1
+	WriteBody = 2
+	Finished = 3
 )
 
-func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
+func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
+	// Initializes the Writer status for the Status line
+	if w.WriteStatus != 0 {
+		return fmt.Errorf("Not ready to receive status line yet")
+	}
+	
 	switch statusCode{
 	case Ok:
-		w.Write([]byte("HTTP/1.1 200 OK" + crlf))
+		_, err := w.writer.Write([]byte("HTTP/1.1 200 OK" + crlf))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+	
+		w.WriteStatus = 1
 		return nil
 	case BadRequest:
-		w.Write([]byte("HTTP/1.1 400 Bad Request" + crlf))
+		_, err := w.writer.Write([]byte("HTTP/1.1 400 Bad Request" + crlf))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+	
+		w.WriteStatus = 1
 		return nil
 	case InternalError:
-		w.Write([]byte("HTTP/1.1 500 Internal Server Error" + crlf))
+		_, err := w.writer.Write([]byte("HTTP/1.1 500 Internal Server Error" + crlf))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+	
+		w.WriteStatus = 1
 		return nil
 	default:
+		w.WriteStatus = 1
 		return nil
 	}
 }
@@ -50,12 +78,17 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 }
 
 
-func WriteHeaders(w io.Writer, headers headers.Headers) error {
-	
+func (w *Writer) WriteHeaders(headers headers.Headers) error {
+	// Checks if the writer is in the correct status for headers
+	if w.WriteStatus != 1 {
+		return fmt.Errorf("Not ready to receive headers yet")
+	}
+
+
 	for k, v := range headers {
 		joined := k + ": " + v + "\r\n"
 		formatted := []byte(joined)
-		_, err := w.Write(formatted)
+		_, err := w.writer.Write(formatted)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -63,13 +96,31 @@ func WriteHeaders(w io.Writer, headers headers.Headers) error {
 	}
 
 	endHeader := []byte("\r\n")
-	_, err := w.Write(endHeader)
+	_, err := w.writer.Write(endHeader)
 	if err != nil {
 			fmt.Println(err)
 			return err
 	}
+	w.WriteStatus = 2
 	return nil
 }
+
+func (w *Writer) WriteBody(p []byte) (int, error) {
+	if w.WriteStatus != 2 {
+		return 0, fmt.Errorf("Not ready to receive body yet")
+	}
+	length := len(p)
+	_, err := w.writer.Write(p)
+	if err != nil {
+			fmt.Println(err)
+			return 0, err
+	}
+	// Reset the write status to finihshed
+	w.WriteStatus = 3
+	return length, nil
+
+}
+
 // Switches on the response code, and sends the HTML response to the w.Writer - need to add writer still
 func HtmlResponse(resposneCode StatusCode) {
 	switch resposneCode{
