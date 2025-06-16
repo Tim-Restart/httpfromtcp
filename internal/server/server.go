@@ -8,11 +8,11 @@ import (
 	"sync/atomic"
 	"httpfromtcp/internal/response"
 	"httpfromtcp/internal/request"
-	"io"
-	"bytes"
 )
+// Old handler function declaration
+// type Handler func(w io.Writer, req *request.Request) *HandlerError
 
-type Handler func(w io.Writer, req *request.Request) *HandlerError
+type Handler func(w *response.Writer, req *request.Request)
 
 type Server struct{
 	// Struct stuff here
@@ -21,7 +21,8 @@ type Server struct{
 	hand 			Handler
 }
 
-
+// No longer required due to refactor
+/*
 type HandlerError struct{
 	HandlerStatusCode 	int
 	HandlerMessage 		string
@@ -31,7 +32,7 @@ func (he HandlerError) Error() string {
 	message := fmt.Sprintf("Status Code: %v Error: %v", he.HandlerStatusCode, he.HandlerMessage)
 	return message
 }
-
+*/
 
 
 func Serve(port int, handler Handler) (*Server, error) {
@@ -96,9 +97,15 @@ func (s *Server) handle(conn net.Conn) {
 
 	parsedRequest, err := request.RequestFromReader(conn)
 	if err != nil {
-		_ = WriteHandlerError(conn, &HandlerError{})
+		// _ = WriteHandlerError(conn, &HandlerError{}) // Not needed after refactor
 		return
 	}
+
+	writer := response.NewWriter(conn)
+	s.hand(writer, parsedRequest) 
+}
+
+	/* All below is not needed after refactor
 	var buf bytes.Buffer
 
 	err = s.hand(&buf, parsedRequest)
@@ -138,6 +145,7 @@ func (s *Server) handle(conn net.Conn) {
 	}
 
 }
+	
 
 func WriteHandlerError(w io.Writer, he *HandlerError) error {
 	header := "Content-Type: text/plain\r\nContent-Length: "
@@ -169,31 +177,5 @@ func WriteHandlerError(w io.Writer, he *HandlerError) error {
 	return nil
 }
 
-/*
-
-func WriteSuccessM(w io.Writer, message string) error {
-
-	length := len(message)
-
-	err = response.WriteStatusLine(w, response.Ok)
-	if err != nil {
-		log.Println("Error writing status code")
-		return err
-	}
-	length := buf.Len()
-	defaultHeaders := response.GetDefaultHeaders(length)
-	err = response.WriteHeaders(w, defaultHeaders)
-	if err != nil {
-		log.Println("Error writting headers")
-		return err
-	}
-	log.Printf("Buf print: %v", buf)
-	_, err = buf.WriteTo(conn)
-	if err != nil {
-		_ = WriteHandlerError(conn, err.(*HandlerError))
-		return err
-	}
-	return nil
-}
-
-*/
+End of commented out old code
+	*/

@@ -27,6 +27,14 @@ const (
 	Finished = 3
 )
 
+func NewWriter( w io.Writer) *Writer{
+	newWriter := &Writer{
+		writer: w,
+		WriteStatus: 0,
+	}
+	return newWriter
+}
+
 func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	// Initializes the Writer status for the Status line
 	if w.WriteStatus != 0 {
@@ -122,17 +130,17 @@ func (w *Writer) WriteBody(p []byte) (int, error) {
 }
 
 // Switches on the response code, and sends the HTML response to the w.Writer - need to add writer still
-func HtmlResponse(resposneCode StatusCode) {
-	switch resposneCode{
+func HtmlResponse(responseCode StatusCode) string{
+	switch responseCode{
 	case BadRequest:
-		w.Write([]byte("<html>\n  <head>\n\t<title>400 Bad Request</title>\n  </head>\n  <body>\n\t<h1>Bad Request</h1>\n\t<p>Your request honestly kinda sucked.</p>\n  </body>\n</html>"))
-		return nil
+		badRequest := "<html>\n  <head>\n\t<title>400 Bad Request</title>\n  </head>\n  <body>\n\t<h1>Bad Request</h1>\n\t<p>Your request honestly kinda sucked.</p>\n  </body>\n</html>"
+		return badRequest
 	case InternalError:
-		w.Write([]byte("<html>\n  <head>\n\t<title>500 Internal Server Error</title>\n  </head>\n  <body>\n\t<h1>Internal Server Error</h1>\n\t<p>Okay, you know what? This one is on me.</p>\n  </body>\n</html>"))
-		return nil
+		internalError := "<html>\n  <head>\n\t<title>500 Internal Server Error</title>\n  </head>\n  <body>\n\t<h1>Internal Server Error</h1>\n\t<p>Okay, you know what? This one is on me.</p>\n  </body>\n</html>"
+		return internalError
 	default:
-		w.Write([]byte("<html>\n  <head>\n\t<title>200 OK</title>\n  </head>\n  <body>\n\t<h1>Success!</h1>\n\t<p>Your request was an absolute banger.</p>\n  </body>\n</html>"))
-		return nil
+		okResponse := "<html>\n  <head>\n\t<title>200 OK</title>\n  </head>\n  <body>\n\t<h1>Success!</h1>\n\t<p>Your request was an absolute banger.</p>\n  </body>\n</html>"
+		return okResponse
 	}
 }
 

@@ -3,23 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
-	"io"
 	"httpfromtcp/internal/request"
 	"httpfromtcp/internal/server"
 	"httpfromtcp/internal/response"
+	"httpfromtcp/internal/headers"
 )
 
 const inputFilePath = "messages.txt"
 const network = "tcp"
 const host = 42069
 
-func NewWriter( w io.Writer) *Writer{
-	newWriter := &Writer{
-		writer: w,
-		WriteStatus: 0,
-	}
-	return newWriter
-}
+
 
 
 // Handler functions go here
@@ -33,12 +27,16 @@ func firstHandler(w *response.Writer, req *request.Request) {
 			fmt.Println("Failed to write status line")
 			return
 		}
+		headers := headers.NewHeaders()
+		headers.Set("Content-Type", "text/html")
+		headers.Set("Connection", "close")
 		err = w.WriteHeaders(headers)
 		if err != nil {
 			fmt.Println("Failed to write headers")
 			return
 		}
-		err = w.WriteBody([]byte(htmlContent))
+		htmlContent := response.HtmlResponse(response.BadRequest)
+		_, err = w.WriteBody([]byte(htmlContent))
 		if err != nil {
 			fmt.Println("Failed to write body")
 			return
@@ -50,12 +48,17 @@ func firstHandler(w *response.Writer, req *request.Request) {
 			fmt.Println("Failed to write status line")
 			return
 		}
+		headers := headers.NewHeaders()
+		headers.Set("Content-Type", "text/html")
+		headers.Set("Connection", "close")
 		err = w.WriteHeaders(headers)
 		if err != nil {
 			fmt.Println("Failed to write headers")
 			return
 		}
-		err = w.WriteBody([]byte(htmlContent))
+	
+		htmlContent := response.HtmlResponse(response.InternalError)
+		_, err = w.WriteBody([]byte(htmlContent))
 		if err != nil {
 			fmt.Println("Failed to write body")
 			return
@@ -66,12 +69,17 @@ func firstHandler(w *response.Writer, req *request.Request) {
 			fmt.Println("Failed to write status line")
 			return
 		}
+		headers := headers.NewHeaders()
+		headers.Set("Content-Type", "text/html")
+		headers.Set("Connection", "close")
 		err = w.WriteHeaders(headers)
 		if err != nil {
 			fmt.Println("Failed to write headers")
 			return
 		}
-		err = w.WriteBody([]byte(htmlContent))
+	
+		htmlContent := response.HtmlResponse(response.Ok)
+		_, err = w.WriteBody([]byte(htmlContent))
 		if err != nil {
 			fmt.Println("Failed to write body")
 			return
