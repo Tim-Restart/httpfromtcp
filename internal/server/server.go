@@ -93,4 +93,6 @@ func (s *Server) handle(conn net.Conn) {
 	s.hand(writer, parsedRequest) 
 }
 
+func proxy(conn net.Conn) {
 	
+}

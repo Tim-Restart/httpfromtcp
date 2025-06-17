@@ -155,11 +155,11 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 	hexLength := strconv.FormatInt(int64(length), 16)
 	_, err := w.writer.Write([]byte(hexLength + crlf))
 	if err != nil {
-		return 0, fmt.Error("Error writing the length of chuncked body")
+		return 0, fmt.Errorf("Error writing the length of chuncked body")
 	}
 	_, err = w.writer.Write(p)
 	if err != nil {
-		return 0, fmt.Error("Error writing the body of chuncked body")
+		return 0, fmt.Errorf("Error writing the body of chuncked body")
 	}
 	_, err = w.writer.Write([]byte(crlf))
 	if err != nil {
