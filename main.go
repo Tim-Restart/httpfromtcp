@@ -12,6 +12,7 @@ import (
 	"io"
 	"crypto/sha256"
 	"strconv"
+	"os"
 )
 
 const inputFilePath = "messages.txt"
@@ -141,9 +142,36 @@ func firstHandler(w *response.Writer, req *request.Request) {
 			fmt.Println("Failed to write body")
 			return
 		}
+
+	case "/video":
+		err := w.WriteStatusLine(response.Ok)
+		if err != nil {
+			fmt.Println("Failed to write status line")
+			return
+		}
+		headers := headers.NewHeaders()
+		headers.Set("Content-Type", "video/mp4")
+		headers.Set("Connection", "close")
+		err = w.WriteHeaders(headers)
+		if err != nil {
+			fmt.Println("Failed to write headers")
+			return
+		}
+		data, err := os.ReadFile("assets/vim.mp4")
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = w.WriteBody(data)
+		if err != nil {
+			fmt.Println("Failed to watch video")
+			return
+		}
+		return
+
+
 	
 	default:
-			err := w.WriteStatusLine(response.Ok) // Not sure if this is right
+		err := w.WriteStatusLine(response.Ok) // Not sure if this is right
 		if err != nil {
 			fmt.Println("Failed to write status line")
 			return
