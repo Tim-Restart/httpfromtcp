@@ -171,13 +171,39 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 
 func (w *Writer) WriteChunkedBodyDone() (int, error) {
 	// does what is required once the chuncked body is done
-	endChunk := []byte("0\r\n\r\n")
+	endChunk := []byte("0\r\n")
 	length, err := w.writer.Write(endChunk)
 	if err != nil {
 		return 0, fmt.Errorf("Error writing the end of chuncked package")
 	}
 	return length, nil
 
+}
+
+func (w *Writer) WriteTrailers(h headers.Headers) error {
+	// Trailers are formated like headers:
+	// Trailer: Lane, Prime, TJ
+	// Then at the bottom:
+	// Lane: goober
+	// Prime: chill-guy
+	// TJ: 1-indexer
+	// \r\n
+	endChunk := []byte(crlf)
+	for k, v := range h {
+		joined := k + ": " + v + "\r\n"
+		formatted := []byte(joined)
+		_, err := w.writer.Write(formatted)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+	}
+	_, err := w.writer.Write(endChunk)
+	if err != nil {
+			fmt.Println(err)
+			return err
+		}
+	return nil
 }
 
 

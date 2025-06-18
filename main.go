@@ -10,6 +10,8 @@ import (
 	"strings"
 	"net/http"
 	"io"
+	"crypto/sha256"
+	"strconv"
 )
 
 const inputFilePath = "messages.txt"
@@ -43,19 +45,24 @@ func firstHandler(w *response.Writer, req *request.Request) {
 			fmt.Println("Failed to write status line")
 			return
 		}
-		headers := headers.NewHeaders()
-		headers.Set("Content-Type", "text/plain")
-		headers.Set("Transfer-Encoding", "chunked")
-		err = w.WriteHeaders(headers)
+		header := headers.NewHeaders()
+		header.Set("Content-Type", "text/plain")
+		header.Set("Transfer-Encoding", "chunked")
+		header.Set("Trailer", "X-Content-SHA256, X-Content-Length")
+		
+		err = w.WriteHeaders(header)
 		if err != nil {
 			fmt.Println("Failed to write headers")
 			return
 		}
 
+		var fullBody []byte
+
 		for {
 			n, err := res.Body.Read(buf)
 			if n > 0 {
 				_, err2 := w.WriteChunkedBody(buf[:n])
+				fullBody = append(fullBody, buf[:n]...)
 				if err2 != nil {
 					fmt.Println("Failed to write chunked body")
 					return
@@ -72,11 +79,24 @@ func firstHandler(w *response.Writer, req *request.Request) {
 		}
 
 		_, err = w.WriteChunkedBodyDone()
-			if err != nil {
-				fmt.Println("Failed to end chunked body")
-				return
-			}
+		if err != nil {
+			fmt.Println("Failed to end chunked body")
+			return
+		}
+
+		sum := fmt.Sprintf("%x", sha256.Sum256(fullBody))
+		chunkedLength := strconv.Itoa(len(fullBody))
+		trailers := headers.NewHeaders()
+		trailers.Set("X-Content-SHA256", sum)
+		trailers.Set("X-Content-Length", chunkedLength)
+		err = w.WriteTrailers(trailers)
+		if err != nil {
+			fmt.Println("Failed to write trailers")
+			return
+		}
+		return
 	}
+
 
 	switch inputRequest {
 	case "/yourproblem":
@@ -145,6 +165,7 @@ func firstHandler(w *response.Writer, req *request.Request) {
 		}
 	}
 	
+
 }
 
 
